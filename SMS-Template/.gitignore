@@ -1,2 +1,4 @@
 node_modules/
 .env
+authService/keys/private*
+authService/routes/auth/keys/private*

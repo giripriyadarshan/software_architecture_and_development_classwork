@@ -18,7 +18,7 @@ app.use(express.json());
 app.use("/api/professors", professorRoute);
 
 // Start server
-const PORT = process.env.PORT || 5003;
+const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => {
   console.log(`Professor Server running on port ${PORT}`);
 });

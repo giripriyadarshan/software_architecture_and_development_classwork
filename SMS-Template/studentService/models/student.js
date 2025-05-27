@@ -21,11 +21,6 @@ const studentSchema = new mongoose.Schema({
     },
 });
 
-// Create the Student model
-const Student = mongoose.model("Student", studentSchema);
-
-module.exports = Student;
-
 
 studentSchema.pre("save", async function (next) {
     if (!this.isModified("password")) {
@@ -41,3 +36,7 @@ studentSchema.pre("save", async function (next) {
     }
 
 })
+
+const Student = mongoose.model("Student", studentSchema);
+
+module.exports = Student;
