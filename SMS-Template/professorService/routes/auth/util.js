@@ -71,7 +71,7 @@ function verifyRole(requiredRoles) {
       req.user = decoded; // Attach the decoded payload (user data) to the request object
 
       // Step 2: Check if the user has any of the required roles
-      const userRoles = req.user.roles || [];
+      const userRoles = req.user.payload.role || [];
       const hasRequiredRole = userRoles.some((role) =>
         requiredRoles.includes(role)
       );
