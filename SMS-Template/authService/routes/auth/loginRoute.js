@@ -1,9 +1,7 @@
-
- 
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
- 
+
 const {
   generateJWTWithPrivateKey,
   fetchStudents,
@@ -23,7 +21,7 @@ router.post("/student", async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
- 
+
     //get the list of students
     const students = await fetchStudents();
     const student = students.find((student) => student.email === email);
@@ -31,78 +29,63 @@ router.post("/student", async (req, res) => {
     if (!student) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
- 
+
     //compare the password
     const isMatch = await bcrypt.compare(password, student.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
- 
-    //return res.status(200).json({students}); // Verification
-    //Generate JWT Token
-    const payload = {id: student._id, role: [ROLES.STUDENT]};
-    const token = generateJWTWithPrivateKey ({payload});
-    return res.status(200).json({accessToken: token});
- 
-    } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Server error" });
+
+    // Generate JWT
+    const token = await generateJWTWithPrivateKey({
+      userId: student._id,
+      email: student.email,
+      role: ROLES.STUDENT,
+    });
+    res.json({ token });
+
+  } catch (error) {
+    console.error("Student login error:", error);
+    res.status(500).json({ message: "Server error during student login" });
   }
 });
- 
-/*// Professor Login
+
+// Professor Login
 router.post("/professor", async (req, res) => {
   const { email, password } = req.body;
- 
+
   try {
     if (!email || !password) {
       return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+          .status(400)
+          .json({ message: "Email and password are required" });
     }
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Server error" });
-  }
-}); */
- 
-//Professor Login
-router.post("/professor", async (req, res) => {
-  const { email, phone, password } = req.body;
- 
-  try {
-    if (!email ||!phone || !password) {
-      return res.status(400).json({ message: "Email and Phone and password are required" });
-    }
- 
-    //get the list of professors
+
+    // Fetch professors
     const professors = await fetchProfessors();
-    const professor = professors.find((professor) => professor.email === email);
- 
+    const professor = professors.find((p) => p.email === email);
+
     if (!professor) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
- 
-    //compare the password
-    const isMatch = await bcrypt.compare(password, professor.password);
-    if (!isMatch) {
+
+    const isPasswordValid = await bcrypt.compare(password, professor.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
- 
-    //return res.status(200).json({professors}); // Verification
-    //Generate JWT Token
-    const payload = {id: professor._id, role: [ROLES.PROFESSOR]};
-    const token = generateJWTWithPrivateKey ({payload});
-    return res.status(200).json({accessToken: token});
- 
-    } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Server error" });
+
+    // Generate JWT
+    const token = await generateJWTWithPrivateKey({
+      userId: professor._id,
+      email: professor.email,
+      roles: [ROLES.PROFESSOR],
+    });
+    res.json({ token });
+
+  } catch (error) {
+    console.error("Professor login error:", error);
+    res.status(500).json({ message: "Server error during professor login" });
   }
 });
- 
+
 module.exports = router;
- 
- 
- 
- 
