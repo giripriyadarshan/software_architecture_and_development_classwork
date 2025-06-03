@@ -30,7 +30,7 @@ router.post("/", async (req,res) => {
     }
 });
     //get request for posting students
-    router.get("/", async (req, res) => {
+    router.get("/",verifyRole(ROLES.ADMIN, ROLES.AUTH_SERVICE, ROLES.PROFESSOR, ROLES.ENROLLMENT_SERVICE) , async (req, res) => {
     try {
         const students = await Student.find();
         return res.status(200).json(students);
