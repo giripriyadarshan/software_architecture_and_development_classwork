@@ -51,8 +51,7 @@ function verifyRole(requiredRoles) {
     }
 
     try {
-      const decoded = await verifyJWTWithJWKS(token);
-      req.user = decoded;
+      req.user = await verifyJWTWithJWKS(token);
 
       const userRoles = req.user.roles || [];
       const hasRequiredRole = userRoles.some((role) =>
