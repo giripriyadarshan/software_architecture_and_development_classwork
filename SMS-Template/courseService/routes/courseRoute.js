@@ -1,5 +1,3 @@
-// TODO: refactor the error code to specific error codes
-
 const express = require("express");
 const Course = require("../models/course");
 const router = express.Router();
@@ -24,7 +22,7 @@ router.post(
         res.status(201).json(course);
       } catch (error) {
         console.error("Error creating course:", error);
-        res.status(500).json({ error: error.message });
+        res.status(400).json({ error: error.message });
       }
     }
 );
@@ -103,7 +101,7 @@ router.put(
         }
       } catch (error) {
         console.error(`Error updating course ${req.params.id}:`, error);
-        res.status(500).json({ error: error.message });
+        res.status(400).json({ error: error.message });
       }
     }
 );
