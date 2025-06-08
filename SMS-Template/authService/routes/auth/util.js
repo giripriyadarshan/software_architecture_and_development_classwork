@@ -47,9 +47,7 @@ function generateJWTWithPrivateKey(payload) {
 // JWT verification function
 function verifyJWTWithPublicKey(token) {
   try {
-
-    const decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
-    return decoded;
+    return jwt.verify(token, publicKey, {algorithms: ["RS256"]});
   } catch (error) {
     console.error("Error verifying JWT:", error);
     throw new Error("Invalid or expired token");

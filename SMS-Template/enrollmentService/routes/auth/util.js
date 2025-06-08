@@ -88,8 +88,6 @@ async function verifyJWTWithJWKS(token) {
   return jwt.verify(token, publicKey, { algorithms: ["RS256"] });
 }
 
-//TODO: Handle the private key generation
-// Generate a JWT using the private key
 function generateJWTWithPrivateKey(payload) {
   // Sign the JWT using RS256 (asymmetric encryption)
   const token = jwt.sign(payload, privateKey, {
@@ -114,8 +112,7 @@ function verifyRole(requiredRoles) {
 
     try {
       // Step 1: Verify the JWT token using JWKS
-      const decoded = await verifyJWTWithJWKS(token); // Decode the token and get the payload
-      req.user = decoded; // Attach the decoded payload (user data) to the request object
+      req.user = await verifyJWTWithJWKS(token); // Attach the decoded payload (user data) to the request object
 
       // Step 2: Check if the user has any of the required roles
       const userRoles = req.user.roles || [];
