@@ -1,8 +1,6 @@
-// TODO: Add handling for actions which require the professor id who's action is being performed. Basically verify the professor's ID in the request params and token (it should be the same), if it is admin? allow all ops.
-
 const express = require("express");
 const Professor = require("../models/professor");
-const { verifyRole } = require("./auth/util");
+const { verifyRole, restrictProfessorToOwnData} = require("./auth/util");
 const { ROLES } = require("../../consts");
 
 const router = express.Router();
@@ -39,8 +37,15 @@ router.post("/",verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) => 
 });
 
 // Get all professors
-router.get("/",verifyRole([ROLES.ADMIN]), async (req, res) => {
+router.get("/",verifyRole([ROLES.ADMIN, ROLES.AUTH_SERVICE, ROLES.ENROLLMENT_SERVICE]), async (req, res) => {
   try {
+    if (
+        req.user.id === ROLES.AUTH_SERVICE &&
+        req.user.roles.includes(ROLES.AUTH_SERVICE)
+    ) {
+      const professors = await Professor.find();
+      return res.status(200).json(professors);
+    }
     const professors = await Professor.find().select("-password"); // Exclude password
     return res.status(200).json(professors);
   } catch (error) {
@@ -50,7 +55,7 @@ router.get("/",verifyRole([ROLES.ADMIN]), async (req, res) => {
 });
 
 // Get a specific professor by ID
-router.get("/:id",verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) => {
+router.get("/:id",verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessorToOwnData, async (req, res) => {
   try {
     const professor = await Professor.findById(req.params.id).select(
       "-password"
@@ -71,7 +76,7 @@ router.get("/:id",verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) =
 });
 
 // Update a professor
-router.put("/:id",verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) => {
+router.put("/:id",verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessorToOwnData, async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
@@ -103,7 +108,7 @@ router.put("/:id",verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) =
 });
 
 // Delete a professor
-router.delete("/:id",verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) => {
+router.delete("/:id",verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessorToOwnData, async (req, res) => {
   try {
     const professor = await Professor.findByIdAndDelete(req.params.id);
 
