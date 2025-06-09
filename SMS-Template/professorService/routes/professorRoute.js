@@ -39,10 +39,7 @@ router.post("/", verifyRole([ROLES.ADMIN]), async (req, res) => {
 // Get all professors
 router.get("/", verifyRole([ROLES.ADMIN, ROLES.AUTH_SERVICE, ROLES.ENROLLMENT_SERVICE]), jwtRateLimiter, async (req, res) => {
     try {
-        if (
-            req.user.id === ROLES.AUTH_SERVICE &&
-            req.user.roles.includes(ROLES.AUTH_SERVICE)
-        ) {
+        if (req.user.id === ROLES.AUTH_SERVICE && req.user.roles.includes(ROLES.AUTH_SERVICE)) {
             const professors = await Professor.find();
             return res.status(200).json(professors);
         }
@@ -57,9 +54,7 @@ router.get("/", verifyRole([ROLES.ADMIN, ROLES.AUTH_SERVICE, ROLES.ENROLLMENT_SE
 // Get a specific professor by ID
 router.get("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessorToOwnData, async (req, res) => {
     try {
-        const professor = await Professor.findById(req.params.id).select(
-            "-password"
-        );
+        const professor = await Professor.findById(req.params.id).select("-password");
 
         if (!professor) {
             return res.status(404).json({message: "Professor not found"});
@@ -86,13 +81,9 @@ router.put("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessor
             updatedData.password = await bcrypt.hash(password, salt);
         }
 
-        const professor = await Professor.findByIdAndUpdate(
-            req.params.id,
-            updatedData,
-            {
-                new: true,
-            }
-        );
+        const professor = await Professor.findByIdAndUpdate(req.params.id, updatedData, {
+            new: true,
+        });
 
         if (!professor) {
             return res.status(404).json({message: "Professor not found"});
