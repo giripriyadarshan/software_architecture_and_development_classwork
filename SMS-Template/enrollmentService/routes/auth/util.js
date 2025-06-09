@@ -117,7 +117,12 @@ function verifyRole(requiredRoles) {
             req.user = await verifyJWTWithJWKS(token); // Attach the decoded payload (user data) to the request object
 
             // Step 2: Check if the user has any of the required roles
-            const userRoles = req.user.roles || [];
+            let userRoles = [];
+            if (Array.isArray(req.user.role)) {
+                userRoles = req.user.role;
+            } else if (typeof req.user.role === 'string') {
+                userRoles = [req.user.role];
+            }
             const hasRequiredRole = userRoles.some((role) =>
                 requiredRoles.includes(role)
             );
