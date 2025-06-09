@@ -4,9 +4,9 @@ const path = require("path");
 const dotenv = require("dotenv");
 const axios = require("axios");
 const {
-  STUDENT_SERVICE,
-  PROFESSOR__SERVICE,
-  ROLES,
+    STUDENT_SERVICE,
+    PROFESSOR__SERVICE,
+    ROLES,
 } = require("../../../consts");
 
 dotenv.config();
@@ -28,47 +28,63 @@ const jku = `http://localhost:${authServicePort}/.well-known/jwks.json`;
 
 // Generate a JWT using the private key
 function generateJWTWithPrivateKey(payload) {
-  try {
-    const token = jwt.sign(payload, privateKey, {
-      algorithm: "RS256",
-      expiresIn: "1h",
-      header: {
-        kid: kid,
-        jku: jku,
-      },
-    });
-    return token;
-  } catch (error) {
-    console.error("Error generating JWT:", error);
-    throw new Error("Failed to generate JWT");
-  }
+    try {
+        const token = jwt.sign(payload, privateKey, {
+            algorithm: "RS256",
+            expiresIn: "1h",
+            header: {
+                kid: kid,
+                jku: jku,
+            },
+        });
+        return token;
+    } catch (error) {
+        console.error("Error generating JWT:", error);
+        throw new Error("Failed to generate JWT");
+    }
 }
 
 // JWT verification function
 function verifyJWTWithPublicKey(token) {
-  try {
-    return jwt.verify(token, publicKey, {algorithms: ["RS256"]});
-  } catch (error) {
-    console.error("Error verifying JWT:", error);
-    throw new Error("Invalid or expired token");
-  }
+    try {
+        return jwt.verify(token, publicKey, {algorithms: ["RS256"]});
+    } catch (error) {
+        console.error("Error verifying JWT:", error);
+        throw new Error("Invalid or expired token");
+    }
 }
 
 async function fetchStudents() {
-  const response = await axios.get(STUDENT_SERVICE);
-  return response.data;
+    let token = generateJWTWithPrivateKey({
+        id: ROLES.AUTH_SERVICE,
+        roles: [ROLES.AUTH_SERVICE],
+    });
+    const response = await axios.get(`${STUDENT_SERVICE}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.data;
 }
 
 async function fetchProfessors() {
-  const response = await axios.get(PROFESSOR__SERVICE);
-  return response.data;
+    let token = generateJWTWithPrivateKey({
+        id: ROLES.AUTH_SERVICE,
+        roles: [ROLES.AUTH_SERVICE],
+    });
+    const response = await axios.get(`${PROFESSOR__SERVICE}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.data;
 }
 
 module.exports = {
-  kid,
-  jku,
-  generateJWTWithPrivateKey,
-  verifyJWTWithPublicKey,
-  fetchStudents,
-  fetchProfessors,
+    kid,
+    jku,
+    generateJWTWithPrivateKey,
+    verifyJWTWithPublicKey,
+    fetchStudents,
+    fetchProfessors,
 };
