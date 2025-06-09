@@ -6,7 +6,7 @@ const {ROLES} = require("../../consts");
 const router = express.Router();
 
 // Create a new professor
-router.post("/", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) => {
+router.post("/", verifyRole([ROLES.ADMIN]), async (req, res) => {
     try {
         const {name, email, phone, password} = req.body;
 
