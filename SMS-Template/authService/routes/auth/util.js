@@ -57,7 +57,7 @@ function verifyJWTWithPublicKey(token) {
 async function fetchStudents() {
     let token = generateJWTWithPrivateKey({
         id: ROLES.AUTH_SERVICE,
-        roles: [ROLES.AUTH_SERVICE],
+        role: [ROLES.AUTH_SERVICE],
     });
     const response = await axios.get(`${STUDENT_SERVICE}`, {
         headers: {
@@ -70,7 +70,7 @@ async function fetchStudents() {
 async function fetchProfessors() {
     let token = generateJWTWithPrivateKey({
         id: ROLES.AUTH_SERVICE,
-        roles: [ROLES.AUTH_SERVICE],
+        role: [ROLES.AUTH_SERVICE],
     });
     const response = await axios.get(`${PROFESSOR__SERVICE}`, {
         headers: {

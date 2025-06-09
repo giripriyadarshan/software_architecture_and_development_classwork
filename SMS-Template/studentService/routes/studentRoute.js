@@ -32,17 +32,20 @@ router.post("/", async (req, res) => {
 //get request for posting students
 router.get("/", verifyRole([ROLES.ADMIN, ROLES.AUTH_SERVICE, ROLES.PROFESSOR, ROLES.ENROLLMENT_SERVICE]), jwtRateLimiter, async (req, res) => {
     try {
-        if (
-            req.user.id === ROLES.AUTH_SERVICE &&
-            req.user.roles.includes(ROLES.AUTH_SERVICE)
-        ) {
+        let hasAuthServiceRole = false;
+        if (Array.isArray(req.user.role)) {
+            hasAuthServiceRole = req.user.role.includes(ROLES.AUTH_SERVICE);
+        } else if (typeof req.user.role === 'string') {
+            hasAuthServiceRole = req.user.role === ROLES.AUTH_SERVICE;
+        }
+        if (req.user.id === ROLES.AUTH_SERVICE && hasAuthServiceRole) {
             const students = await Student.find();
             return res.json(students);
         }
         const students = await Student.find().select("-password");
         return res.json(students);
     } catch (error) {
-        return res.status(500).json({message: "Unable to Find students"});
+        return res.status(500).json({message: error.message});
     }
 });
 

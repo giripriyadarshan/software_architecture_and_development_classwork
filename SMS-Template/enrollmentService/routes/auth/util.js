@@ -169,7 +169,13 @@ async function fetchCourses() {
 }
 
 function restrictStudentToOwnData(req, res, next) {
-    if (req.user.roles.includes(ROLES.STUDENT) && req.user.id !== req.params.id) {
+    let hasStudentRole = false;
+    if (Array.isArray(req.user.role)) {
+        hasStudentRole = req.user.role.includes(ROLES.STUDENT);
+    } else if (typeof req.user.role === 'string') {
+        hasStudentRole = req.user.role === ROLES.STUDENT;
+    }
+    if (hasStudentRole && req.user.id !== req.params.id) {
         return res.status(403).json({
             message: "Access forbidden: You can only access your own data",
         });

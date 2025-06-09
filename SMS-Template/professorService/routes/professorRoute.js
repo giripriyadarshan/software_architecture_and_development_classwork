@@ -39,7 +39,13 @@ router.post("/", verifyRole([ROLES.ADMIN]), async (req, res) => {
 // Get all professors
 router.get("/", verifyRole([ROLES.ADMIN, ROLES.AUTH_SERVICE, ROLES.ENROLLMENT_SERVICE]), jwtRateLimiter, async (req, res) => {
     try {
-        if (req.user.id === ROLES.AUTH_SERVICE && req.user.roles.includes(ROLES.AUTH_SERVICE)) {
+        let hasAuthServiceRole = false;
+        if (Array.isArray(req.user.role)) {
+            hasAuthServiceRole = req.user.role.includes(ROLES.AUTH_SERVICE);
+        } else if (typeof req.user.role === 'string') {
+            hasAuthServiceRole = req.user.role === ROLES.AUTH_SERVICE;
+        }
+        if (req.user.id === ROLES.AUTH_SERVICE && hasAuthServiceRole) {
             const professors = await Professor.find();
             return res.status(200).json(professors);
         }

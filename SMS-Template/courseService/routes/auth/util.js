@@ -98,10 +98,13 @@ function verifyRole(requiredRoles) {
 }
 
 function restrictProfessorToOwnData(req, res, next) {
-    if (
-        req.user.roles.includes(ROLES.PROFESSOR) &&
-        req.user.id !== req.params.id
-    ) {
+    let hasProfessorRole = false;
+    if (Array.isArray(req.user.role)) {
+        hasProfessorRole = req.user.role.includes(ROLES.PROFESSOR);
+    } else if (typeof req.user.role === 'string') {
+        hasProfessorRole = req.user.role === ROLES.PROFESSOR;
+    }
+    if (hasProfessorRole && req.user.id !== req.params.id) {
         return res.status(403).json({
             message: "Access forbidden: You can only access your own data",
         });
