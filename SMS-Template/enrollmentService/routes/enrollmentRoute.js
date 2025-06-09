@@ -20,7 +20,6 @@ router.post("/", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) =>
                 .status(400)
                 .json({message: "Student and Course are required"});
         }
-        //TODO
         const students = fetchStudents();
         const existingStudent = students.find(s => s._id === student);
         if (!existingStudent) {
@@ -108,8 +107,10 @@ router.get("/student/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR, ROLES.STUDE
 // Get enrollment by course ID
 router.get("/course/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) => {
     try {
-        //TODO
-
+        const enrollments = await Enrollment.find({course: req.params.id})
+        if (!enrollments.length) {
+            return res.status(404).json({message: "No enrollments found for the course"});
+        }
         res.status(200).json(enrollments);
     } catch (error) {
         res.status(500).json({
