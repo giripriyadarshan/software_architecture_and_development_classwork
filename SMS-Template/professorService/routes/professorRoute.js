@@ -1,5 +1,6 @@
 const express = require("express");
 const Professor = require("../models/professor");
+const bcrypt = require("bcrypt");
 const {verifyRole, restrictProfessorToOwnData, jwtRateLimiter} = require("./auth/util");
 const {ROLES} = require("../../consts");
 
@@ -58,9 +59,10 @@ router.get("/", verifyRole([ROLES.ADMIN, ROLES.AUTH_SERVICE, ROLES.ENROLLMENT_SE
 });
 
 // Get a specific professor by ID
-router.get("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessorToOwnData, async (req, res) => {
+router.get("/:email", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessorToOwnData, async (req, res) => {
     try {
-        const professor = await Professor.findById(req.params.id).select("-password");
+        const {email} = req.params;
+        const professor = await Professor.findOne({email}).select("-password");
 
         if (!professor) {
             return res.status(404).json({message: "Professor not found"});
@@ -77,8 +79,9 @@ router.get("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessor
 });
 
 // Update a professor
-router.put("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessorToOwnData, async (req, res) => {
+router.put("/:emailParam", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessorToOwnData, async (req, res) => {
     try {
+        const {emailParam} = req.params;
         const {name, email, phone, password} = req.body;
 
         const updatedData = {name, email, phone};
@@ -87,7 +90,7 @@ router.put("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessor
             updatedData.password = await bcrypt.hash(password, salt);
         }
 
-        const professor = await Professor.findByIdAndUpdate(req.params.id, updatedData, {
+        const professor = await Professor.findOneAndUpdate({email: emailParam}, updatedData, {
             new: true,
         });
 
@@ -105,9 +108,10 @@ router.put("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessor
 });
 
 // Delete a professor
-router.delete("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessorToOwnData, async (req, res) => {
+router.delete("/:email", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), restrictProfessorToOwnData, async (req, res) => {
     try {
-        const professor = await Professor.findByIdAndDelete(req.params.id);
+        const {email} = req.params;
+        const professor = await Professor.findOneAndDelete({email});
 
         if (!professor) {
             return res.status(404).json({message: "Professor not found"});
