@@ -6,7 +6,7 @@ const path = require("path");
 const rateLimit = require("express-rate-limit");
 
 const {ROLES, STUDENT_SERVICE, COURSE_SERVICE} = require("../../../consts");
-const {studentServiceLogger: logger} = require("../../../logging");
+const {enrollmentServiceLogger: logger} = require("../../../logging");
 const {getCorrelationId} = require("../../../correlationId");
 
 dotenv.config();

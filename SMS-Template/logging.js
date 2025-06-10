@@ -58,12 +58,14 @@ const createDynamicLogger = (appName) => {
     return logger;
 };
 let authServiceLogger = createDynamicLogger("authService");
+let professorServiceLogger = createDynamicLogger("professorService");
 let studentServiceLogger = createDynamicLogger("studentService");
 let enrollmentServiceLogger = createDynamicLogger("enrollmentService");
 let courseServiceLogger = createDynamicLogger("courseService");
 
 module.exports = {
     authServiceLogger,
+    professorServiceLogger,
     studentServiceLogger,
     enrollmentServiceLogger,
     courseServiceLogger,

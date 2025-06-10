@@ -6,7 +6,7 @@ const {
     generateJWTWithPrivateKey, fetchStudents, fetchProfessors,
 } = require("./util");
 const {ROLES} = require("../../../consts");
-const {studentServiceLogger: logger} = require("../../../logging");
+const {authServiceLogger: logger} = require("../../../logging");
 const {getCorrelationId} = require("../../../correlationId");
 
 const router = express.Router();

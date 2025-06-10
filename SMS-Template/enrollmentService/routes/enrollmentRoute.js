@@ -9,7 +9,7 @@ const {
 } = require("./auth/util");
 const {ROLES} = require("../../consts");
 
-const {studentServiceLogger: logger} = require("../../logging");
+const {enrollmentServiceLogger: logger} = require("../../logging");
 const {getCorrelationId} = require("../../correlationId");
 
 // Create a new enrollment

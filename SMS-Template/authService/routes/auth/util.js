@@ -6,7 +6,7 @@ const axios = require("axios");
 const {
     STUDENT_SERVICE, PROFESSOR__SERVICE, ROLES,
 } = require("../../../consts");
-const {studentServiceLogger: logger} = require("../../../logging");
+const {authServiceLogger: logger} = require("../../../logging");
 const {getCorrelationId} = require("../../../correlationId");
 
 dotenv.config();

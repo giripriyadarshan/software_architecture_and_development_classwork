@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 const axios = require("axios");
 const {ROLES} = require("../../../consts");
 const rateLimit = require("express-rate-limit");
-const {studentServiceLogger: logger} = require("../../../logging");
+const {courseServiceLogger: logger} = require("../../../logging");
 const {getCorrelationId} = require("../../../correlationId");
 
 dotenv.config();

@@ -3,7 +3,7 @@ const Professor = require("../models/professor");
 const bcrypt = require("bcrypt");
 const {verifyRole, restrictProfessorToOwnData, jwtRateLimiter} = require("./auth/util");
 const {ROLES} = require("../../consts");
-const {studentServiceLogger: logger} = require("../../logging");
+const {professorServiceLogger: logger} = require("../../logging");
 const {getCorrelationId} = require("../../correlationId");
 
 const router = express.Router();

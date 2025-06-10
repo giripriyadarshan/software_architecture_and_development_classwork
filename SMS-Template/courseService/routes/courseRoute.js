@@ -3,7 +3,7 @@ const Course = require("../models/course");
 const router = express.Router();
 const {verifyRole, jwtRateLimiter} = require("./auth/util");
 const {ROLES} = require("../../consts");
-const {studentServiceLogger: logger} = require("../../logging");
+const {courseServiceLogger: logger} = require("../../logging");
 const {getCorrelationId} = require("../../correlationId");
 
 // Create a new course
