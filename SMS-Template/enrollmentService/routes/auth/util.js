@@ -145,7 +145,7 @@ function verifyRole(requiredRoles) {
 async function fetchStudents() {
     let token = generateJWTWithPrivateKey({
         id: ROLES.ENROLLMENT_SERVICE,
-        roles: [ROLES.ENROLLMENT_SERVICE],
+        role: [ROLES.ENROLLMENT_SERVICE],
     });
     const response = await axiosInstance.get(`${STUDENT_SERVICE}`, {
         headers: {
@@ -158,7 +158,7 @@ async function fetchStudents() {
 async function fetchCourses() {
     let token = generateJWTWithPrivateKey({
         id: ROLES.ENROLLMENT_SERVICE,
-        roles: [ROLES.ENROLLMENT_SERVICE],
+        role: [ROLES.ENROLLMENT_SERVICE],
     });
     const response = await axiosInstance.get(`${COURSE_SERVICE}`, {
         headers: {
