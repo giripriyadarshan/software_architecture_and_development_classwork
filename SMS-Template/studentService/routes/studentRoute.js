@@ -15,7 +15,8 @@ router.post("/", async (req, res) => {
     logger.debug(`Query Body: ${req.body}`);
 
     if (!name || !email || !password) {
-        return res.status(400).json({message: "Provide name, email and password"});
+        logger.warn("Missing required fields for creating a student");
+        return res.status(400).json({message: "Provide name, email and password", correlationId: getCorrelationId()});
     }
     try {
         //check if student exists
@@ -32,8 +33,7 @@ router.post("/", async (req, res) => {
     } catch (error) {
         logger.error(`Error creating student: ${error.message}`);
         return res.status(500).json({
-            message: "Unable to create student",
-            correlationId: getCorrelationId()
+            message: "Unable to create student", correlationId: getCorrelationId()
         });
 
     }
@@ -58,8 +58,7 @@ router.get("/", verifyRole([ROLES.ADMIN, ROLES.AUTH_SERVICE, ROLES.PROFESSOR, RO
     } catch (error) {
         logger.error(`Error fetching students: ${error.message}`);
         return res.status(500).json({
-            message: error.message,
-            correlationId: getCorrelationId()
+            message: error.message, correlationId: getCorrelationId()
         });
     }
 });
@@ -78,8 +77,7 @@ router.get("/:email", async (req, res) => {
     } catch (error) {
         logger.error(`Error fetching student: ${error.message}`);
         return res.status(500).json({
-            message: "Unable to find student",
-            correlationId: getCorrelationId()
+            message: "Unable to find student", correlationId: getCorrelationId()
         });
     }
 });
@@ -107,8 +105,7 @@ router.put("/:email", verifyRole(ROLES.ADMIN), async (req, res) => {
     } catch (error) {
         logger.error(`Error updating student: ${error.message}`);
         return res.status(500).json({
-            message: "Unable to update student",
-            correlationId: getCorrelationId()
+            message: "Unable to update student", correlationId: getCorrelationId()
         });
     }
 });
@@ -129,8 +126,7 @@ router.patch("/:email", verifyRole(ROLES.ADMIN), async (req, res) => {
     } catch (error) {
         logger.error(`Error partially updating student: ${error.message}`);
         return res.status(500).json({
-            message: "Unable to update student",
-            correlationId: getCorrelationId()
+            message: "Unable to update student", correlationId: getCorrelationId()
         });
     }
 });
@@ -150,8 +146,7 @@ router.delete("/:email", verifyRole(ROLES.ADMIN), async (req, res) => {
     } catch (error) {
         logger.error(`Error deleting student: ${error.message}`);
         return res.status(500).json({
-            message: "Error deleting student",
-            correlationId: getCorrelationId()
+            message: "Error deleting student", correlationId: getCorrelationId()
         });
     }
 });
