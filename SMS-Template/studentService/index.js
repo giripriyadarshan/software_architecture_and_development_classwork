@@ -4,6 +4,8 @@ const connectDB = require('./config/db');
 
 const studentRoutes = require('./routes/studentRoute');
 
+const {correlationIdMiddleware} = require("../correlationId");
+
 // to read the .env file
 dotEnv.config();
 
@@ -15,6 +17,8 @@ connectDB();
 
 // middleware
 app.use(express.json());
+app.use(correlationIdMiddleware);
+
 app.use("/api/students", studentRoutes);
 
 const PORT = process.env.PORT || 5003;
