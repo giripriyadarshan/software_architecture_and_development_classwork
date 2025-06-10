@@ -3,12 +3,17 @@ const Course = require("../models/course");
 const router = express.Router();
 const {verifyRole, jwtRateLimiter} = require("./auth/util");
 const {ROLES} = require("../../consts");
+const {studentServiceLogger: logger} = require("../../logging");
+const {getCorrelationId} = require("../../correlationId");
+
 // Create a new course
 router.post("/", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) => {
     try {
         if (!req.user || !req.user.userId) {
-            console.error("User ID (userId) not found in token payload for createdBy field.");
-            return res.status(401).json({error: "Unauthorized: User ID missing from token."});
+            logger.warn("User ID (userId) not found in token payload.");
+            return res.status(401).json({
+                error: "Unauthorized: User ID missing from token.", correlationId: getCorrelationId()
+            });
         }
 
         const courseData = {...req.body};
@@ -16,10 +21,11 @@ router.post("/", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) =>
 
         const course = new Course(courseData);
         await course.save();
+        logger.info(`New course created with ID: ${course._id} by user: ${req.user.userId}`);
         res.status(201).json(course);
     } catch (error) {
-        console.error("Error creating course:", error);
-        res.status(400).json({error: error.message});
+        logger.error(`Error creating course: ${error.message}`);
+        res.status(400).json({error: error.message, correlationId: getCorrelationId()});
     }
 });
 
@@ -27,10 +33,11 @@ router.post("/", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) =>
 router.get("/", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR, ROLES.ENROLLMENT_SERVICE]), jwtRateLimiter, async (req, res) => {
     try {
         const courses = await Course.find();
+        logger.info(`Fetched all courses successfully`);
         res.status(200).json(courses);
     } catch (error) {
-        console.error("Error fetching all courses:", error);
-        res.status(500).json({error: error.message});
+        logger.error(`Error fetching courses: ${error.message}`);
+        res.status(500).json({error: error.message, correlationId: getCorrelationId()});
     }
 });
 
@@ -39,12 +46,14 @@ router.get("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR, ROLES.ENROLLMENT_SE
     try {
         const course = await Course.findById(req.params.id);
         if (!course) {
-            return res.status(404).json({message: "Course not found"});
+            logger.warn(`Course with ID ${req.params.id} not found`);
+            return res.status(404).json({message: "Course not found", correlationId: getCorrelationId()});
         }
+        logger.info(`Fetched course with ID: ${req.params.id}`);
         res.status(200).json(course);
     } catch (error) {
-        console.error(`Error fetching course ${req.params.id}:`, error);
-        res.status(500).json({error: error.message});
+        logger.error(`Error fetching course with ID ${req.params.id}: ${error.message}`);
+        res.status(500).json({error: error.message, correlationId: getCorrelationId()});
     }
 });
 
@@ -53,12 +62,16 @@ router.put("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) 
     try {
         const course = await Course.findById(req.params.id);
         if (!course) {
-            return res.status(404).json({message: "Course not found"});
+            logger.warn(`Course with ID ${req.params.id} not found for update`);
+            return res.status(404).json({message: "Course not found", correlationId: getCorrelationId()});
         }
 
         if (!req.user || !req.user.userId) {
-            console.error("User ID (userId) not found in token payload for ownership check.");
-            return res.status(401).json({error: "Unauthorized: User ID missing from token for ownership check."});
+            logger.warn("User ID (userId) not found in token payload for ownership check.");
+            return res.status(401).json({
+                error: "Unauthorized: User ID missing from token for ownership check.",
+                correlationId: getCorrelationId()
+            });
         }
 
         if ((req.user.roles && req.user.roles.includes(ROLES.ADMIN)) || // Check if roles array exists and includes ADMIN
@@ -71,15 +84,18 @@ router.put("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) 
             const updatedCourse = await Course.findByIdAndUpdate(req.params.id, req.body, {
                 new: true, runValidators: true,
             });
+            logger.info(`Course with ID ${req.params.id} updated successfully by user: ${req.user.userId}`);
             res.status(200).json(updatedCourse);
         } else {
+            logger.warn(`Access forbidden: User with ID ${req.user.userId} tried to update course ${req.params.id} they did not create.`);
             return res.status(403).json({
                 message: "Access forbidden: You can only update courses you created.",
+                correlationId: getCorrelationId()
             });
         }
     } catch (error) {
-        console.error(`Error updating course ${req.params.id}:`, error);
-        res.status(400).json({error: error.message});
+        logger.error(`Error updating course ${req.params.id}: ${error.message}`);
+        res.status(400).json({error: error.message, correlationId: getCorrelationId()});
     }
 });
 
@@ -90,30 +106,37 @@ router.delete("/:id", verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, re
         const course = await Course.findById(courseId);
 
         if (!course) {
-            return res.status(404).json({message: "Course not found"});
+            logger.warn(`Course with ID ${courseId} not found for deletion`);
+            return res.status(404).json({message: "Course not found", correlationId: getCorrelationId()});
         }
 
         // Ensure req.user and req.user.userId exist for ownership check
         if (!req.user || !req.user.userId) {
-            console.error("User ID (userId) not found in token payload for ownership check.");
-            return res.status(401).json({error: "Unauthorized: User ID missing from token for ownership check."});
+            logger.warn("User ID (userId) not found in token payload for ownership check.");
+            return res.status(401).json({
+                error: "Unauthorized: User ID missing from token for ownership check.",
+                correlationId: getCorrelationId()
+            });
         }
 
         // Ownership Check: Allow if user is ADMIN or the creator of the course
         // Ensure to compare with req.user.userId as createdBy stores userId
         if ((req.user.roles && req.user.roles.includes(ROLES.ADMIN)) || course.createdBy === req.user.userId) {
             await Course.findByIdAndDelete(courseId);
+            logger.info(`Course with ID ${courseId} deleted successfully by user: ${req.user.userId}`);
             res
                 .status(200)
                 .json({message: "Course deleted successfully", course});
         } else {
+            logger.warn(`Access forbidden: User with ID ${req.user.userId} tried to delete course ${courseId} they did not create.`);
             return res.status(403).json({
                 message: "Access forbidden: You can only delete courses you created.",
+                correlationId: getCorrelationId()
             });
         }
     } catch (error) {
-        console.error(`Error deleting course ${req.params.id}:`, error);
-        res.status(500).json({error: error.message});
+        logger.error(`Error deleting course ${req.params.id}: ${error.message}`);
+        res.status(500).json({error: error.message, correlationId: getCorrelationId()});
     }
 });
 
