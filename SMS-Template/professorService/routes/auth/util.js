@@ -3,6 +3,8 @@ const dotenv = require("dotenv");
 const axios = require("axios");
 const {ROLES} = require("../../../consts");
 const rateLimit = require("express-rate-limit");
+const {studentServiceLogger: logger} = require("../../../logging");
+const {getCorrelationId} = require("../../../correlationId");
 
 dotenv.config();
 
@@ -25,6 +27,7 @@ async function fetchJWKS(jku) {
 function getPublicKeyFromJWKS(kid, keys) {
     const key = keys.find((k) => k.kid === kid);
     if (!key) {
+        logger.error(`No matching key found for kid: ${kid}`);
         throw new Error("Unable to find a signing key that matches the 'kid'");
     }
     return `-----BEGIN PUBLIC KEY-----\n${key.n}\n-----END PUBLIC KEY-----`;
@@ -36,15 +39,16 @@ function getPublicKeyFromJWKS(kid, keys) {
  * @returns {Promise<object>} - A promise that resolves to the decoded JWT payload.
  */
 async function verifyJWTWithJWKS(token) {
-    console.log(token);
     const decodedHeader = jwt.decode(token, {complete: true}).header;
     const {kid, alg, jku} = decodedHeader;
 
     if (!kid || !jku) {
+        logger.error("JWT header is missing 'kid' or 'jku'");
         throw new Error("JWT header is missing 'kid' or 'jku'");
     }
 
     if (alg !== "RS256") {
+        logger.error(`Unsupported algorithm: ${alg}`);
         throw new Error(`Unsupported algorithm: ${alg}`);
     }
 
@@ -57,10 +61,10 @@ async function verifyJWTWithJWKS(token) {
 // Role-based Access Control Middleware
 function verifyRole(requiredRoles) {
     return async (req, res, next) => {
-        const token =
-            req.headers.authorization && req.headers.authorization.split(" ")[1]; // Extract token from 'Bearer <token>'
+        const token = req.headers.authorization && req.headers.authorization.split(" ")[1]; // Extract token from 'Bearer <token>'
 
         if (!token) {
+            logger.warn("Authorization token is missing");
             return res
                 .status(401)
                 .json({message: "Authorization token is missing"});
@@ -75,21 +79,22 @@ function verifyRole(requiredRoles) {
             } else if (typeof req.user.role === 'string') {
                 userRoles = [req.user.role];
             }
-            const hasRequiredRole = userRoles.some((role) =>
-                requiredRoles.includes(role)
-            );
+            const hasRequiredRole = userRoles.some((role) => requiredRoles.includes(role));
             if (hasRequiredRole) {
                 return next(); // User has at least one of the required roles, so proceed
             } else {
+                logger.warn(`Access forbidden: User with roles ${userRoles.join(", ")} does not have required roles ${requiredRoles.join(", ")}`);
                 return res
                     .status(403)
                     .json({message: "Access forbidden: Insufficient role"});
             }
         } catch (error) {
-            console.error(error);
+            logger.error(`JWT verification failed: ${error.message}`);
             return res
                 .status(403)
-                .json({message: "Invalid or expired token", error: error.message});
+                .json({
+                    message: "Invalid or expired token", error: error.message, correlationId: getCorrelationId()
+                });
         }
     };
 }
@@ -102,8 +107,9 @@ function restrictProfessorToOwnData(req, res, next) {
         hasProfessorRole = req.user.role === ROLES.PROFESSOR;
     }
     if (hasProfessorRole && req.user.id !== req.params.id) {
+        logger.warn(`Access forbidden: Professor ${req.user.id} tried to access data of another professor ${req.params.id}`);
         return res.status(403).json({
-            message: "Access forbidden: You can only access your own data",
+            message: "Access forbidden: You can only access your own data", correlationId: getCorrelationId()
         });
     }
     next();
@@ -115,14 +121,15 @@ const jwtRateLimiter = rateLimit({
     message: "You crossed the rate limit. Please try again later.",
     keyGenerator: (req) => req.user.id,
     handler: (req, res) => {
+        logger.warn(`Rate limit exceeded for user ID: ${req.user.id}`);
         res
             .status(429)
-            .json({message: "You crossed the rate limit. Please try again later."});
+            .json({
+                message: "You crossed the rate limit. Please try again later.", correlationId: getCorrelationId()
+            });
     },
 });
 
 module.exports = {
-    verifyRole,
-    restrictProfessorToOwnData,
-    jwtRateLimiter,
+    verifyRole, restrictProfessorToOwnData, jwtRateLimiter,
 };
