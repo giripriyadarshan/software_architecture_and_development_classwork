@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "cls-hooked": "^4.2.2",
+    "uuid": "^11.1.0",
     "winston": "^3.17.0",
     "winston-elasticsearch": "^0.19.0"
   }
