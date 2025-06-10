@@ -50,10 +50,10 @@ router.get("/", verifyRole([ROLES.ADMIN, ROLES.AUTH_SERVICE, ROLES.PROFESSOR, RO
 });
 
 // GET - Get one student by email
-router.get("/:email", restrictStudentToOwnData, async (req, res) => {
+router.get("/:email", async (req, res) => {
     const {email} = req.params;
     try {
-        const student = await Student.findOne({email});
+        const student = await Student.findOne({email}).select("-password");
         if (!student) {
             return res.status(404).json({message: "Student not found"});
         }
@@ -64,7 +64,7 @@ router.get("/:email", restrictStudentToOwnData, async (req, res) => {
 });
 
 // PUT/PATCH - Update student by email
-router.put("/:email", restrictStudentToOwnData, async (req, res) => {
+router.put("/:email", verifyRole(ROLES.ADMIN), async (req, res) => {
     const {email} = req.params;
     const {name, password} = req.body;
 
@@ -75,7 +75,7 @@ router.put("/:email", restrictStudentToOwnData, async (req, res) => {
     try {
         const updatedStudent = await Student.findOneAndUpdate({email}, {name, email, password}, {
             new: true, runValidators: true
-        });
+        }).select("-password");
         if (!updatedStudent) {
             return res.status(404).json({message: "Student not found"});
         }
@@ -86,12 +86,12 @@ router.put("/:email", restrictStudentToOwnData, async (req, res) => {
 });
 
 // PATCH - update particular field/Partial Update
-router.patch("/:email", restrictStudentToOwnData, async (req, res) => {
+router.patch("/:email", verifyRole(ROLES.ADMIN), async (req, res) => {
     const {email} = req.params;
     try {
         const updatedStudent = await Student.findOneAndUpdate({email}, {$set: req.body}, {
             new: true, runValidators: true
-        });
+        }).select("-password");
         if (!updatedStudent) {
             return res.status(404).json({message: "Student not found"});
         }
@@ -103,7 +103,7 @@ router.patch("/:email", restrictStudentToOwnData, async (req, res) => {
 
 
 // DELETE - Remove student by email
-router.delete("/:email", restrictStudentToOwnData, async (req, res) => {
+router.delete("/:email", verifyRole(ROLES.ADMIN), async (req, res) => {
     const {email} = req.params;
     try {
         const deletedStudent = await Student.findOneAndDelete({email});
